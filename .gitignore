@@ -3,3 +3,4 @@ data_working/
 __pycache__/
 *.pptx
 *.docx
+*.Rhistory
