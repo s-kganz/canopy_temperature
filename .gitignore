@@ -4,5 +4,5 @@ __pycache__/
 *.pptx
 *.docx
 *.Rhistory
-.Rproj.user
-.Rproj
+*.Rproj.user
+*.Rproj
