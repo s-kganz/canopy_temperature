@@ -6,7 +6,7 @@ base_files <- list.files(data_dir, pattern="BASE_HH")
 
 read_ameriflux_base <- function(f) {
   target_vars <- c("TIMESTAMP", "T_CANOPY", "TA_", "PA", "RH", "VPD", "LW_IN", 
-                   "LW_OUT", "SW_IN", "SW_OUT", "WS")
+                   "LW_OUT", "SW_IN", "SW_OUT", "WS", "G", "H", "USTAR", "LE")
   
   mybase <- read_csv(file.path(data_dir, f), skip=2, na=c("", "NA", "-9999")) %>%
     select(contains(target_vars)) %>%

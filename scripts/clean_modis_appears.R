@@ -43,9 +43,7 @@ mod_aqua <- read_csv(file.path(
       str_sub(MYD11A1_061_QC_Day_bitmask, 3),
       base=2
     ),
-    platform="aqua",
-    # TODO remove when new request finishes
-    Day_view_time=13.5
+    platform="aqua"
   ) %>%
   # Drop the product name from the columns
   rename_with(
