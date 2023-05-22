@@ -3,7 +3,7 @@ library(lubridate)
 
 mod_terra <- read_csv(file.path(
   "data_in/appears_modis_ecostress/",
-  "Ameriflux-canopy-temperature-MODIS-ECOSTRESS-MOD11A1-061-results.csv"
+  "Ameriflux-canopy-temperature-MODIS-ECOSTRESS-2-MOD11A1-061-results.csv"
 )) %>%
   # Drop unnecessary columns
   select(-Category, -MODIS_Tile, -MOD11A1_061_Line_Y_1km,
@@ -28,7 +28,7 @@ mod_terra <- read_csv(file.path(
 
 mod_aqua <- read_csv(file.path(
   "data_in/appears_modis_ecostress/",
-  "Ameriflux-canopy-temperature-MODIS-ECOSTRESS-MYD11A1-061-results.csv"
+  "Ameriflux-canopy-temperature-MODIS-ECOSTRESS-2-MYD11A1-061-results.csv"
 )) %>%
   # Drop unnecessary columns
   select(-Category, -MODIS_Tile, -MYD11A1_061_Line_Y_1km,
@@ -49,7 +49,7 @@ mod_aqua <- read_csv(file.path(
   rename_with(
     function(x) {str_replace(x, "MYD11A1_061_", "")},
     contains("MYD11A1_061_")
-  )
+  ) %>% select(-Emis_31)
 
 # Join the two tables
 mod <- mod_aqua %>% bind_rows(mod_terra) %>%
