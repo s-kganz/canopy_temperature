@@ -36,8 +36,10 @@ get_highest_measurement <- function(table, base) {
   qual_vertical <- str_extract_all(quals, "\\d", simplify=TRUE)[, 2] %>%
     parse_number()
   
-  qual_vertical_max <- max(qual_vertical, na.rm=TRUE)
-  target_indices <- matched_indices[which(qual_vertical == qual_vertical_max)]
+  # Highest vertical measurement has the LOWEST qualifier
+  # See https://ameriflux.lbl.gov/data/data-variable-qualifier-examples/
+  qual_vertical_highest <- min(qual_vertical, na.rm=TRUE)
+  target_indices <- matched_indices[which(qual_vertical == qual_vertical_highest)]
   
   target_indices
 }
