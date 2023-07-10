@@ -13,20 +13,15 @@ library(tidyverse)
 
 ameriflux_modis <- read_csv("data_working/ameriflux_modis_joined.csv")
 ameriflux_meta  <- read_csv("data_working/ameriflux_site_metadata.csv")
-ameriflux_cover <- read_csv("data_working/ameriflux_combined_forest_cover.csv")
 
 forest_igbps <- c("EBF", "ENF", "DBF", "MF")
 forest_sites <- ameriflux_meta$SITE_ID[ameriflux_meta$IGBP %in% forest_igbps]
 
-scale_cols <- c("T_CANOPY", "LST_Day_1km", "forest_cover_naip", "abs_view_angle")
+scale_cols <- c("T_CANOPY", "LST_Day_1km", "Lai", "abs_view_angle")
 
 ameriflux_forest_unscaled <- ameriflux_modis %>% 
   left_join(
     ameriflux_meta %>% select(SITE_ID, IGBP),
-    by=c("ID"="SITE_ID")
-  ) %>%
-  left_join(
-    ameriflux_cover %>% select(SITE_ID, forest_cover_naip, forest_cover_palsar),
     by=c("ID"="SITE_ID")
   ) %>%
   filter(IGBP %in% forest_igbps) %>%
@@ -44,9 +39,11 @@ ameriflux_forest_unscaled <- ameriflux_modis %>%
   mutate(LST_Day_1km = LST_Day_1km - 273.15,
          abs_view_angle =abs(Day_view_angl)) %>%
   # Collect predictors and scale to make lme4 happy
-  select(T_CANOPY, LST_Day_1km, abs_view_angle, Day_view_angl, forest_cover_naip,
-         forest_cover_palsar, ID, IGBP, Day_view_datetime) %>%
+  select(T_CANOPY, LST_Day_1km, abs_view_angle, Lai, Day_view_angl,
+         ID, IGBP, Day_view_datetime) %>%
   drop_na()
+
+
 
 ameriflux_forest <- ameriflux_forest_unscaled %>%
   mutate(
@@ -65,7 +62,7 @@ scale_constants <- lapply(
 
 # Descriptive statistics
 ameriflux_forest %>%
-  select(T_CANOPY, LST_Day_1km, abs_view_angle, forest_cover_naip) %>%
+  select(T_CANOPY, LST_Day_1km, abs_view_angle, Lai) %>%
   pivot_longer(everything()) %>%
   group_by(name) %>%
   summarize(mean=mean(value),
@@ -78,22 +75,22 @@ ameriflux_forest %>%
 ## Random effect structure ----
 # Full model with 3rd-order interaction
 full_lm <- lm(
-  T_CANOPY ~ LST_Day_1km*abs_view_angle*forest_cover_naip,
+  T_CANOPY ~ LST_Day_1km*abs_view_angle*Lai,
   data=ameriflux_forest,
   na.action="na.fail"
 )
 
-# The only candidate random effect is an intercept because forest cover should
+# The only candidate random effect is an intercept because LAI should
 # account for random effect due to slope.
 lmer_ri <- lmer(
-  T_CANOPY ~ LST_Day_1km*abs_view_angle*forest_cover_naip +
+  T_CANOPY ~ LST_Day_1km*abs_view_angle*Lai +
     (1 | ID),
   data=ameriflux_forest,
   na.action="na.fail"
 )
 
 lmer_rs <- lmer(
-  T_CANOPY ~ LST_Day_1km*abs_view_angle*forest_cover_naip +
+  T_CANOPY ~ LST_Day_1km*abs_view_angle*Lai +
     (0 + LST_Day_1km | ID),
   data=ameriflux_forest,
   na.action="na.fail"
@@ -105,7 +102,7 @@ rlrt_rs <- exactRLRT(lmer_rs)
 
 ## Fixed effect structure ----
 full_lmer <- lmer(
-  T_CANOPY ~ LST_Day_1km*abs_view_angle*forest_cover_naip +
+  T_CANOPY ~ LST_Day_1km*abs_view_angle*Lai +
     (1 | ID),
   data=ameriflux_forest,
   na.action="na.fail"
