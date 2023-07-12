@@ -1,9 +1,11 @@
 library(tidyverse)
 library(lubridate)
+library(colorspace)
 source("scripts/leaf_eb_kibler.R")
 
 fluxnet_modis <- read_csv("data_working/fluxnet_modis_lst_lai.csv")
 fluxnet_meta  <- read_csv("data_working/fluxnet_site_metadata.csv")
+lai           <- read_csv("")
 epoch <- parse_date("1970-01-01", "%Y-%m-%d")
 
 # Maybe filter to observations within the growing season of each site??
@@ -26,28 +28,31 @@ fluxnet_temp <- fluxnet_modis %>%
   left_join(fluxnet_meta, by=c("SITE"="SITE_ID"))
 
 # Make sure it worked - yeah we chillin
+palette <- choose_palette()
 fluxnet_temp %>%
-  select(contains("T_CANOPY"), LST_Day_1km) %>%
+  select(contains("T_CANOPY"), LST_Day_1km, Lai) %>%
   pivot_longer(contains("T_CANOPY")) %>%
-  ggplot(aes(x=value, y=LST_Day_1km)) + geom_point() +
+  ggplot(aes(x=value, y=LST_Day_1km)) + 
+  geom_point(aes(color=Lai), alpha=0.2) +
   geom_abline(slope=1, intercept=0, color="red") +
   facet_wrap(~ name)
 
 # How does the error vary with LAI by site and by IGBP?
-fluxnet_temp %>%
-  filter(month(TIMESTAMP_START_LOCAL) %in% 6:9) %>%
-  group_by(SITE) %>%
-  filter(n() > 20) %>%
-  mutate(T_CANOPY_ERROR = LST_Day_1km - T_CANOPY_BEST) %>%
-  ggplot(aes(x=Lai, y=T_CANOPY_ERROR)) +
-  stat_ellipse(
-    aes(fill=SITE),
-    geom="polygon",
-    show.legend=FALSE,
-    alpha=0.3
-  ) +
-  facet_wrap(~ IGBP) +
-  labs(x = "Leaf Area Index",
-       y = "LST - T_CANOPY Difference") +
-  theme_bw()
-
+# fluxnet_temp %>%
+#   filter(month(TIMESTAMP_START_LOCAL) %in% 6:9) %>%
+#   group_by(SITE) %>%
+#   # filter(n() > 20,
+#   #        max(Lai) - min(Lai) > 1) %>%
+#   filter(Lai < 3) %>%
+#   mutate(T_CANOPY_ERROR = LST_Day_1km - T_CANOPY_BEST) %>%
+#   ggplot(aes(x=Lai, y=T_CANOPY_ERROR)) +
+#   stat_ellipse(
+#     aes(fill=SITE),
+#     geom="polygon",
+#     show.legend=FALSE,
+#     alpha=0.3
+#   ) +
+#   facet_wrap(~ IGBP) +
+#   labs(x = "Leaf Area Index",
+#        y = "LST - T_CANOPY Difference") +
+#   theme_bw()
