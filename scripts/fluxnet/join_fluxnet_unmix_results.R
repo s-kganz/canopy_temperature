@@ -43,16 +43,37 @@ fluxnet_summary <- fluxnet %>%
             n = n())
 
 # Join unmixing results with fluxnet summary
+lai_thresh <- 4
 flux_modis <- fluxnet_summary %>%
-  inner_join(modis, by=c("SITE"="SITE_ID", "MODIS_JOIN_DATE"="window_start",
-                         "HOUR"="Day_view_time"))
+  inner_join(
+    modis %>%
+      mutate(T_for_new = linear_intercept + linear_slope * lai_thresh), 
+    by=c("SITE"="SITE_ID", "MODIS_JOIN_DATE"="window_start",
+                         "HOUR"="Day_view_time")
+  )
 
 # Unmixing slightly reduces estimation, but bias is still very high.
 flux_modis %>%
   # growing season only
   filter(month(MODIS_JOIN_DATE) %in% 6:9) %>% 
-  pivot_longer(c(LST, T_for_log)) %>%
+  #filter(Lai > 2) %>%
+  filter(Day_view_angl < 5) %>%
+  pivot_longer(c(LST, T_for_linear)) %>%
   ggplot(aes(x=T_CANOPY_BEST, y=value)) +
   geom_point(aes(color=Lai)) +
   facet_wrap(~ name) +
   geom_abline(slope=1, intercept=0, color="red")
+
+# If LAI == 2.5 is not the right marker for a forest canopy, is there a
+# better value?
+lai_thresh_lm <- lm(
+  T_CANOPY_BEST ~ 0 + linear_slope + offset(linear_intercept),
+  data=flux_modis
+)
+
+lst_lm <- lm(
+  T_CANOPY_BEST ~ LST + Lai,
+  data=flux_modis
+)
+
+plot(flux_modis$T_CANOPY_BEST, lst_lm$fitted.values)

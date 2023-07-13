@@ -84,9 +84,7 @@ all_flux_qc <- all_flux %>%
     ),
     TIMESTAMP_START_LOCAL = TIMESTAMP_START + hours(as.integer(UTC_OFFSET)),
     TIMESTAMP_END_LOCAL   = TIMESTAMP_END + hours(as.integer(UTC_OFFSET))
-  ) %>%
-  # Drop observations outside of the observation range for Aqua
-  filter(hour(TIMESTAMP_START_LOCAL) <= 15, hour(TIMESTAMP_START_LOCAL) >= 10)
+  )
 
 all_flux_qc %>%
   write_csv("data_working/fluxnet_forest_cleaned.csv")
